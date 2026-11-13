@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#0A1124">
+<title>Acompanhe sua OS</title>
+<style>
+  /* =====================================================================
+     CellGestor - página de acompanhamento da OS (para o cliente)
+     Preencha SÓ as duas linhas de CONFIG lá embaixo (procure "CONFIG").
+     ===================================================================== */
+  :root {
+    --fundo: #0A1124; --card: #111C3D; --card2: #0B1430; --borda: #26386B;
+    --texto: #F1F5FF; --muted: #AAB7D4; --azul: #3B82F6; --destaque: #60A5FA;
+    --verde: #34D399; --amarelo: #FBBF24; --vermelho: #F87171; --roxo: #A78BFA;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fundo); color: var(--texto); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px; line-height: 1.45; min-height: 100vh;
+    background: radial-gradient(120% 60% at 50% -10%, #17306A 0%, var(--fundo) 60%) fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 20px 16px 40px; }
+  .topo { display: flex; align-items: center; gap: 12px; margin: 4px 0 18px; }
+  .marca { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none;
+           background: linear-gradient(145deg, #3B82F6, #1D4ED8); font-weight: 800; font-size: 18px; color: #fff;
+           box-shadow: 0 6px 18px rgba(59,130,246,.35); }
+  .topo h1 { font-size: 18px; margin: 0; line-height: 1.2; }
+  .topo small { color: var(--muted); font-size: 13px; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)) , var(--card);
+          border: 1px solid var(--borda); border-radius: 20px; padding: 18px; margin-bottom: 14px; }
+  .ola { color: var(--muted); font-size: 15px; margin: 0 0 4px; }
+  .os-num { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .os-num b { font-size: 26px; letter-spacing: .5px; color: var(--destaque); }
+  .os-num span { color: var(--muted); font-size: 14px; text-align: right; }
+  .aparelho { font-size: 18px; font-weight: 700; margin: 2px 0 14px; word-break: break-word; }
+  .selo { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px;
+          font-weight: 700; font-size: 15px; background: rgba(96,165,250,.14); color: var(--destaque); }
+  .selo::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+  .selo.pronto { background: rgba(52,211,153,.15); color: var(--verde); }
+  .selo.alerta { background: rgba(251,191,36,.14); color: var(--amarelo); }
+  .selo.terceiro { background: rgba(167,139,250,.15); color: var(--roxo); }
+  .selo.cancelado { background: rgba(248,113,113,.14); color: var(--vermelho); }
+  .selo.entregue { background: rgba(170,183,212,.14); color: var(--texto); }
+  .explica { color: var(--muted); margin: 12px 0 0; font-size: 15px; }
+
+  /* linha do tempo */
+  .passos { list-style: none; margin: 18px 0 2px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .passos li { text-align: center; font-size: 12.5px; color: var(--muted); position: relative; }
+  .passos .bola { width: 30px; height: 30px; margin: 0 auto 6px; border-radius: 50%; display: grid; place-items: center;
+                  background: var(--card2); border: 2px solid var(--borda); font-weight: 800; font-size: 13px; color: var(--muted);
+                  position: relative; z-index: 1; }
+  .passos li::before { content: ""; position: absolute; top: 14px; left: -50%; width: 100%; height: 3px; background: var(--borda); }
+  .passos li:first-child::before { display: none; }
+  .passos li.feito::before, .passos li.atual::before { background: var(--azul); }
+  .passos li.feito .bola { background: var(--azul); border-color: var(--azul); color: #fff; }
+  .passos li.atual .bola { border-color: var(--destaque); color: var(--destaque); box-shadow: 0 0 0 5px rgba(96,165,250,.18); }
+  .passos li.atual, .passos li.feito { color: var(--texto); }
+  .passos li.atual.ok .bola { border-color: var(--verde); color: var(--verde); box-shadow: 0 0 0 5px rgba(52,211,153,.18); }
+
+  .grade { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .caixa { background: var(--card2); border: 1px solid var(--borda); border-radius: 14px; padding: 12px; min-width: 0; }
+  .caixa small { display: block; color: var(--muted); font-size: 12.5px; margin-bottom: 2px; }
+  .caixa b { font-size: 16px; word-break: break-word; }
+  .caixa.larga { grid-column: 1 / -1; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 10px; font-weight: 700; }
+  .servicos { white-space: pre-line; margin: 0; font-size: 15.5px; word-break: break-word; }
+  .botoes { display: grid; gap: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; border-radius: 999px;
+         font-weight: 700; font-size: 16px; text-decoration: none; color: #fff; border: 1px solid transparent; cursor: pointer; }
+  .btn svg { width: 20px; height: 20px; flex: none; }
+  .btn.whats { background: #22C55E; }
+  .btn.insta { background: var(--card2); border-color: var(--borda); color: var(--texto); }
+  .btn.atualizar { background: transparent; border-color: var(--borda); color: var(--muted); font-size: 14px; min-height: 44px; font-weight: 600; }
+  .btn:active { transform: scale(.985); }
+  .endereco { color: var(--muted); font-size: 14px; margin: 12px 2px 0; text-align: center; word-break: break-word; }
+  .rodape { color: #6E7DA3; font-size: 12px; text-align: center; margin-top: 22px; }
+  .rodape b { color: var(--muted); font-weight: 600; }
+  .centro { text-align: center; padding: 34px 20px; }
+  .centro .icone { width: 56px; height: 56px; margin: 0 auto 14px; color: var(--destaque); }
+  .centro h1 { font-size: 20px; margin: 0 0 8px; }
+  .centro p { color: var(--muted); margin: 0; }
+  .roda { width: 34px; height: 34px; margin: 0 auto 14px; border-radius: 50%; border: 3px solid var(--borda);
+          border-top-color: var(--destaque); animation: gira .9s linear infinite; }
+  @keyframes gira { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .roda { animation-duration: 3s; } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div id="carregando" class="card centro">
+    <div class="roda" aria-hidden="true"></div>
+    <p>Buscando sua ordem de serviço…</p>
+  </div>
+
+  <div id="erro" class="card centro" hidden>
+    <svg class="icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <h1 id="erro-titulo">OS não encontrada</h1>
+    <p id="erro-texto">Confira se o link está completo, do jeito que a loja mandou.</p>
+  </div>
+
+  <div id="os" hidden>
+    <header class="topo">
+      <div class="marca" id="marca" aria-hidden="true">C</div>
+      <div><h1 id="empresa"></h1><small id="loja"></small></div>
+    </header>
+
+    <section class="card">
+      <p class="ola" id="ola"></p>
+      <div class="os-num"><b id="numero"></b><span id="aberta"></span></div>
+      <div class="aparelho" id="aparelho"></div>
+      <span class="selo" id="selo"></span>
+      <p class="explica" id="explica"></p>
+      <ol class="passos" id="passos" aria-label="Andamento">
+        <li><div class="bola">1</div>Recebido</li>
+        <li><div class="bola">2</div>Em reparo</li>
+        <li><div class="bola">3</div>Pronto</li>
+        <li><div class="bola">4</div>Entregue</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <div class="grade" id="grade"></div>
+    </section>
+
+    <section class="card" id="card-servicos">
+      <h2>Serviço</h2>
+      <p class="servicos" id="servicos"></p>
+    </section>
+
+    <section class="card" id="card-contato">
+      <h2>Falar com a loja</h2>
+      <div class="botoes">
+        <a class="btn whats" id="btn-whats" target="_blank" rel="noopener" hidden>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.5-.3Z"/></svg>
+          Chamar no WhatsApp
+        </a>
+        <a class="btn insta" id="btn-insta" target="_blank" rel="noopener" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+          <span id="insta-txt">Instagram</span>
+        </a>
+        <button class="btn atualizar" id="btn-atualizar" type="button">Atualizar</button>
+      </div>
+      <p class="endereco" id="endereco" hidden></p>
+    </section>
+
+    <p class="rodape">Atualizado às <span id="hora"></span> · <b>CellGestor</b></p>
+  </div>
+</main>
+
+<script>
+  // ============================ CONFIG ============================
+  // Copie do Supabase: Project Settings > API (ou Data API)
+  //  - SUPABASE_URL: a "Project URL" (a mesma do .env do app)
+  //  - SUPABASE_CHAVE: a chave PÚBLICA ("publishable" ou "anon"), a mesma SUPABASE_KEY do .env do app.
+  //    NUNCA coloque aqui a "service_role" / "secret".
+  const SUPABASE_URL = "https://mruyvrgxnbllbbmvumzo.supabase.co";
+  const SUPABASE_CHAVE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1ydXl2cmd4bmJsbGJibXZ1bXpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNDI5MDEsImV4cCI6MjA5ODYxODkwMX0.CassncXJzhFIb-Fb9VeS-z3Wp4bfl8Urz0HM3CGLsco";
+  // ================================================================
+
+  const $ = (id) => document.getElementById(id);
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  function mostrarErro(titulo, texto) {
+    $("carregando").hidden = true; $("os").hidden = true; $("erro").hidden = false;
+    $("erro-titulo").textContent = titulo; $("erro-texto").textContent = texto;
+  }
+
+  function dataBR(valor, comHora) {
+    if (!valor) return null;
+    // "2026-11-13" (só data) não pode virar o dia anterior por causa do fuso
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(valor) ? new Date(valor + "T12:00:00") : new Date(valor);
+    if (isNaN(d)) return null;
+    const op = { day: "2-digit", month: "2-digit", year: "numeric" };
+    if (comHora) Object.assign(op, { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleString("pt-BR", op).replace(",", " às");
+  }
+  const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const digitos = (t) => String(t || "").replace(/\D/g, "");
+
+  function caixa(rotulo, valor, cor, larga) {
+    const c = document.createElement("div");
+    c.className = "caixa" + (larga ? " larga" : "");
+    const s = document.createElement("small"); s.textContent = rotulo;
+    const b = document.createElement("b"); b.textContent = valor;
+    if (cor) b.style.color = cor;
+    c.append(s, b);
+    $("grade").append(c);
+  }
+
+  // status do app -> (passo da linha do tempo, selo, texto)
+  function situacao(o) {
+    const st = o.status || "";
+    if (st === "Cancelado") return { passo: 0, cls: "cancelado", selo: "Cancelada",
+      txt: "Esta ordem de serviço foi cancelada. Qualquer dúvida, fale com a loja." };
+    if (st === "Entregue" || st === "Concluído") return { passo: 4, cls: "entregue", selo: "Entregue",
+      txt: "Aparelho entregue. Obrigado pela confiança!" };
+    if (st === "Pronto para Retirada") return { passo: 3, cls: "pronto", selo: "Pronto para retirada", ok: true,
+      txt: "Seu aparelho está pronto! Pode passar na loja para buscar." };
+    if (st === "Aguardando Peça") return { passo: 2, cls: "alerta", selo: "Aguardando peça",
+      txt: "Estamos esperando a peça chegar para continuar o reparo." };
+    if (st === "Em Terceiro") return { passo: 2, cls: "terceiro", selo: "Em reparo especializado",
+      txt: "Seu aparelho foi para um reparo especializado. Avisamos assim que voltar." };
+    if (st === "Em Andamento") return { passo: 2, cls: "", selo: "Em reparo",
+      txt: "Nossa equipe está trabalhando no seu aparelho." };
+    return { passo: 1, cls: "", selo: "Recebido",
+      txt: "Recebemos seu aparelho. Ele está na fila para o reparo." };
+  }
+
+  function desenhar(o) {
+    const empresa = o.empresa || o.loja || "Assistência técnica";
+    document.title = `OS ${o.numero} · ${empresa}`;
+    $("marca").textContent = (empresa.trim()[0] || "C").toUpperCase();
+    $("empresa").textContent = empresa;
+    $("loja").textContent = o.loja && o.loja !== empresa ? o.loja : "Acompanhamento da ordem de serviço";
+    $("ola").textContent = o.cliente ? `Olá, ${o.cliente}!` : "Olá!";
+    $("numero").textContent = `OS nº ${String(o.numero).padStart(4, "0")}`;
+    const aberta = dataBR(o.aberta_em);
+    $("aberta").textContent = aberta ? `Entrada ${aberta}` : "";
+    $("aparelho").textContent = o.aparelho || "Aparelho";
+
+    const s = situacao(o);
+    $("selo").textContent = s.selo;
+    $("selo").className = "selo " + s.cls;
+    $("explica").textContent = s.txt;
+    const itens = $("passos").children;
+    $("passos").hidden = s.passo === 0;
+    for (let i = 0; i < itens.length; i++) {
+      const n = i + 1;
+      itens[i].className = n < s.passo || (s.passo === 4 && n === 4) ? "feito" : n === s.passo ? "atual" + (s.ok ? " ok" : "") : "";
+    }
+
+    $("grade").replaceChildren();
+    const fechada = s.passo === 4 || s.passo === 0;
+    if (o.valor !== null && o.valor !== undefined && Number(o.valor) > 0) caixa(fechada ? "Valor" : "Orçamento", brl(o.valor));
+    if (!fechada && o.previsao) {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      const prev = new Date(o.previsao + "T00:00:00");
+      caixa("Previsão", dataBR(o.previsao), s.passo < 3 && prev < hoje ? "#FBBF24" : null);
+    }
+    if (s.passo === 3 && o.pronto_em) caixa("Ficou pronto em", dataBR(o.pronto_em));
+    if (s.passo === 4 && o.entregue_em) {
+      caixa("Entregue em", dataBR(o.entregue_em));
+      const dias = Number(o.garantia_dias);
+      if (o.garantia_dias !== null && o.garantia_dias !== undefined && dias > 0) {
+        const fim = new Date(o.entregue_em); fim.setDate(fim.getDate() + dias);
+        const hoje = new Date();
+        const valendo = fim >= hoje;
+        caixa(valendo ? "Garantia até" : "Garantia terminou em", dataBR(fim.toISOString()) + ` (${dias} dias)`,
+              valendo ? "#34D399" : "#AAB7D4", true);
+      }
+    }
+    $("grade").parentElement.hidden = $("grade").children.length === 0;
+
+    $("card-servicos").hidden = !o.servicos;
+    $("servicos").textContent = o.servicos || "";
+
+    const fone = digitos(o.telefone_loja);
+    if (fone.length >= 10) {
+      const num = fone.length <= 11 ? "55" + fone : fone;
+      const msg = `Olá! Quero saber da minha OS nº ${o.numero} (${o.aparelho || "aparelho"}).`;
+      $("btn-whats").href = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+      $("btn-whats").hidden = false;
+    } else { $("btn-whats").hidden = true; }
+    const insta = String(o.instagram || "").trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/^@/, "").replace(/\/.*$/, "");
+    if (/^[A-Za-z0-9._]{1,30}$/.test(insta)) {
+      $("btn-insta").href = `https://instagram.com/${insta}`;
+      $("insta-txt").textContent = "@" + insta;
+      $("btn-insta").hidden = false;
+    } else { $("btn-insta").hidden = true; }
+    $("endereco").textContent = o.endereco || "";
+    $("endereco").hidden = !o.endereco;
+
+    $("hora").textContent = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    $("carregando").hidden = true; $("erro").hidden = true; $("os").hidden = false;
+  }
+
+  async function carregar() {
+    const token = (new URLSearchParams(location.search).get("os") || "").trim();
+    if (!UUID.test(token)) {
+      mostrarErro("Link incompleto", "Abra o link do jeito que a loja mandou no WhatsApp ou leia o QR Code da sua via da OS.");
+      return;
+    }
+    if (SUPABASE_URL.startsWith("COLE_") || SUPABASE_CHAVE.startsWith("COLE_")) {
+      mostrarErro("Página ainda não configurada", "A loja precisa preencher a configuração desta página.");
+      return;
+    }
+    const cab = { "Content-Type": "application/json", apikey: SUPABASE_CHAVE };
+    if (SUPABASE_CHAVE.startsWith("eyJ")) cab.Authorization = "Bearer " + SUPABASE_CHAVE;   // chave "anon" antiga
+    try {
+      const r = await fetch(SUPABASE_URL.replace(/\/+$/, "") + "/rest/v1/rpc/acompanhar_os", {
+        method: "POST", headers: cab, body: JSON.stringify({ p_token: token }), cache: "no-store",
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const dados = await r.json();
+      if (!dados || !dados.numero) {
+        mostrarErro("OS não encontrada", "Confira se o link está completo, do jeito que a loja mandou.");
+        return;
+      }
+      desenhar(dados);
+    } catch (e) {
+      mostrarErro("Não foi possível carregar", "Verifique sua internet e tente de novo em instantes.");
+    }
+  }
+
+  $("btn-atualizar").addEventListener("click", () => {
+    $("os").hidden = true; $("carregando").hidden = false; carregar();
+  });
+  carregar();
+</script>
+</body>
+</html>
